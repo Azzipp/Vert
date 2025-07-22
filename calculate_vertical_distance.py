@@ -65,9 +65,12 @@ def calculate_position_from_acceleration(accel_df):
     """
     Calculate position by double integrating acceleration.
     Returns velocity and position for each axis.
+    
+    NOTE: This simple approach does NOT account for sensor orientation changes
+    and will give incorrect results for significant motion. For accurate results,
+    use the improved versions with gyroscope-based orientation tracking.
     """
     time = accel_df['Time (s)'].values
-    dt = np.diff(time)
     
     # Initialize results
     results = {}
@@ -77,15 +80,11 @@ def calculate_position_from_acceleration(accel_df):
         accel = accel_df[accel_col].values
         
         # First integration: acceleration -> velocity
-        # Use cumulative trapezoidal integration
-        velocity = np.zeros_like(accel)
-        for i in range(1, len(accel)):
-            velocity[i] = velocity[i-1] + 0.5 * (accel[i] + accel[i-1]) * dt[i-1]
+        # Use scipy's cumulative trapezoidal integration (more accurate)
+        velocity = integrate.cumulative_trapezoid(accel, time, initial=0)
         
-        # Second integration: velocity -> position
-        position = np.zeros_like(velocity)
-        for i in range(1, len(velocity)):
-            position[i] = position[i-1] + 0.5 * (velocity[i] + velocity[i-1]) * dt[i-1]
+        # Second integration: velocity -> position  
+        position = integrate.cumulative_trapezoid(velocity, time, initial=0)
         
         results[axis] = {
             'acceleration': accel,
@@ -182,7 +181,10 @@ def create_plots(time, gyro_df, accel_df, position_results, vertical_axis):
 
 def main():
     """Main function to calculate vertical distance."""
-    print("=== Vertical Distance Calculation (No Drift Correction) ===\n")
+    print("=== Vertical Distance Calculation (No Drift Correction) ===")
+    print("WARNING: This simple method does NOT account for sensor orientation")
+    print("changes and will give inaccurate results for significant motion.")
+    print("For accurate results, use calculate_vertical_distance_quaternion.py\n")
     
     # Load data
     gyro_df, accel_df = load_sensor_data()
@@ -207,10 +209,18 @@ def main():
     
     # Final results
     print("=" * 50)
-    print("RESULTS:")
+    print("RESULTS (SIMPLE METHOD - LIKELY INACCURATE):")
     print(f"Vertical axis: {vertical_axis}")
     print(f"Net vertical distance: {vertical_distance:.6f} m")
     print(f"Net vertical distance: {vertical_distance * 100:.2f} cm")
+    print("=" * 50)
+    print()
+    print("IMPORTANT: This result is likely inaccurate because it ignores")
+    print("sensor orientation changes during motion. The gyroscope data")
+    print("shows significant rotation, which invalidates this simple approach.")
+    print()
+    print("For accurate results, run:")
+    print("  python3 calculate_vertical_distance_quaternion.py")
     print("=" * 50)
     
     # Additional information

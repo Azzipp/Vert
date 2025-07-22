@@ -231,7 +231,10 @@ def create_plots(time, gyro_df, accel_df, position_results, vertical_axis):
 
 def main():
     """Main function to calculate vertical distance with drift correction."""
-    print("=== Vertical Distance Calculation (With Drift Correction) ===\n")
+    print("=== Vertical Distance Calculation (With Drift Correction) ===")
+    print("WARNING: While this applies drift correction, it still uses a")
+    print("fundamentally flawed approach that ignores sensor orientation changes.")
+    print("For accurate results, use calculate_vertical_distance_quaternion.py\n")
     
     # Load data
     gyro_df, accel_df = load_sensor_data()
@@ -274,10 +277,18 @@ def main():
     
     # Final results
     print("=" * 60)
-    print("FINAL RESULTS (DRIFT CORRECTED):")
+    print("RESULTS (DRIFT CORRECTED - STILL POTENTIALLY INACCURATE):")
     print(f"Vertical axis: {vertical_axis}")
     print(f"Net vertical distance: {vertical_distance:.6f} m")
     print(f"Net vertical distance: {vertical_distance * 100:.2f} cm")
+    print("=" * 60)
+    print()
+    print("IMPORTANT: While drift correction helps, this method still")
+    print("ignores sensor orientation changes during motion. The gyroscope")
+    print("data shows significant rotation that affects the calculation.")
+    print()
+    print("For the most accurate results, run:")
+    print("  python3 calculate_vertical_distance_quaternion.py")
     print("=" * 60)
     
     # Additional information
